@@ -8,6 +8,7 @@ pub mod render;
 use std::pin::Pin;
 use std::sync::Arc;
 
+use wasm_bindgen::JsValue;
 pub use web_sys as dom;
 
 use crate::diff::Diff;
@@ -17,7 +18,7 @@ use futures::channel::mpsc;
 use futures::{Future, StreamExt};
 use roko_html::Html;
 
-pub struct Response<Model, Msg> {
+pub struct Cmd<Model, Msg> {
     future: Pin<Box<dyn Future<Output = Option<Msg>>>>,
     model: Model,
 }
@@ -29,7 +30,7 @@ macro_rules! response {
     };
 }
 
-impl<Model, Msg: 'static> Response<Model, Msg> {
+impl<Model, Msg: 'static> Cmd<Model, Msg> {
     pub fn new(model: Model, future: Box<dyn Future<Output = Option<Msg>> + Unpin>) -> Self {
         Self {
             future: Box::pin(future),
@@ -45,7 +46,7 @@ impl<Model, Msg: 'static> Response<Model, Msg> {
     }
 }
 
-impl<T: Unpin> Future for Response<T, ()> {
+impl<T: Unpin> Future for Cmd<T, ()> {
     type Output = Option<()>;
 
     fn poll(
@@ -76,10 +77,11 @@ pub async fn start<
 >(
     mut view: V,
     mut update: U,
-    mut init: Response<Model, Msg>,
-) where
+    mut init: Cmd<Model, Msg>,
+) -> Result<(), JsValue>
+where
     V: FnMut(&Model) -> Html<Msg>,
-    U: FnMut(Msg, Model) -> Response<Model, Msg>,
+    U: FnMut(Msg, Model) -> Cmd<Model, Msg>,
 {
     let window = web_sys::window().expect("no global `window` exists");
     let document = window.document().expect("should have a document on window");
@@ -121,6 +123,8 @@ pub async fn start<
             }
         }
     }
+
+    Ok(())
 }
 
 pub async fn none<Msg>() -> Option<Msg> {
