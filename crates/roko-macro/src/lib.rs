@@ -153,7 +153,7 @@ fn transform(node: &syn_rsx::Node) -> proc_macro2::TokenStream {
             }
         }
         syn_rsx::Node::Text(text) => {
-            let text = text.value.as_ref().to_token_stream().to_string();
+            let text = text.value.as_ref().to_token_stream();
             quote! {
                 roko_html::text(#text)
             }
