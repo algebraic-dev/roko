@@ -7,16 +7,14 @@ use std::{fmt::Debug, sync::Arc};
 #[derive(PartialEq, Eq)]
 pub enum Attribute<Msg> {
     OnClick(Arc<Msg>),
-    Class(String),
-    Style(String),
+    Custom(String, String),
 }
 
 impl<Msg> std::fmt::Debug for Attribute<Msg> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             Self::OnClick(_) => f.debug_tuple("OnClick").finish(),
-            Self::Class(arg0) => f.debug_tuple("Class").field(arg0).finish(),
-            Self::Style(arg0) => f.debug_tuple("Style").field(arg0).finish(),
+            Self::Custom(arg0, arg1) => f.debug_tuple("Custom").field(arg0).field(arg1).finish(),
         }
     }
 }
@@ -25,8 +23,7 @@ impl<Msg> Clone for Attribute<Msg> {
     fn clone(&self) -> Self {
         match self {
             Self::OnClick(arg0) => Self::OnClick(arg0.clone()),
-            Self::Class(arg0) => Self::Class(arg0.clone()),
-            Self::Style(arg0) => Self::Style(arg0.clone()),
+            Self::Custom(arg0, arg1) => Self::Custom(arg0.clone(), arg1.clone()),
         }
     }
 }
@@ -63,6 +60,20 @@ impl<Msg> Clone for Node<Msg> {
 pub enum Html<Msg> {
     Node(Node<Msg>),
     Text(String),
+}
+
+impl<Msg> Html<Msg> {
+    pub fn node(
+        tag: &'static str,
+        attributes: Vec<Attribute<Msg>>,
+        children: Vec<Html<Msg>>,
+    ) -> Self {
+        Self::Node(Node {
+            tag,
+            attributes,
+            children,
+        })
+    }
 }
 
 impl<Msg> Debug for Html<Msg> {

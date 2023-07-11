@@ -2,6 +2,7 @@ pub mod file;
 
 use file::http_get;
 
+use roko_dom::elements::*;
 use roko_dom::{start, Cmd};
 use roko_html::Html;
 use roko_macro::html;
@@ -21,7 +22,7 @@ type Model = String;
 fn view(model: &Model) -> Html<Message> {
     html! {
         <div>
-            <button onclick={Message::Increment}>
+            <button onclick={Message::Increment} class="be">
                 "Increment"
             </button>
             <p>

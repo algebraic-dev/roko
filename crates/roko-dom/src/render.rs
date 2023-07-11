@@ -69,8 +69,7 @@ impl<Msg: 'static + Send + Sync> Render<Msg> for Attribute<Msg> {
 
                 closure.forget()
             }
-            Attribute::Class(class) => container.set_attribute("class", class).unwrap(),
-            Attribute::Style(style) => container.set_attribute("style", style).unwrap(),
+            Attribute::Custom(name, value) => container.set_attribute(name, value).unwrap(),
         };
         None
     }

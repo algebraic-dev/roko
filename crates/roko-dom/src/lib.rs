@@ -2,6 +2,7 @@
 
 pub mod app;
 pub mod diff;
+pub mod elements;
 pub mod patch;
 pub mod render;
 

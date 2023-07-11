@@ -655,9 +655,20 @@ dependencies = [
  "console_error_panic_hook",
  "futures",
  "reqwest",
+ "roko-dom",
  "roko-html",
  "roko-macro",
- "roko-dom",
+ "wasm-bindgen",
+ "wasm-bindgen-futures",
+ "web-sys",
+]
+
+[[package]]
+name = "roko-dom"
+version = "0.1.0"
+dependencies = [
+ "futures",
+ "roko-html",
  "wasm-bindgen",
  "wasm-bindgen-futures",
  "web-sys",
@@ -675,17 +686,6 @@ dependencies = [
  "quote",
  "syn 2.0.25",
  "syn-rsx",
-]
-
-[[package]]
-name = "roko-dom"
-version = "0.1.0"
-dependencies = [
- "futures",
- "roko-html",
- "wasm-bindgen",
- "wasm-bindgen-futures",
- "web-sys",
 ]
 
 [[package]]

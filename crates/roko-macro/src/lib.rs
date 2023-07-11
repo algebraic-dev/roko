@@ -54,31 +54,29 @@ pub fn component(_attr: TokenStream, item: TokenStream) -> TokenStream {
 fn transform(node: &syn_rsx::Node) -> proc_macro2::TokenStream {
     match node {
         syn_rsx::Node::Element(el) => {
-            let tag = el.name.to_string();
+            let tag = el.name.to_token_stream();
             let attrs = el.attributes.iter().map(transform);
             let children = el.children.iter().map(transform);
 
             quote! {
-                roko_html::Html::Node(roko_html::Node{
-                    tag: #tag,
-                    attributes: vec![#(#attrs),*],
-                    children: vec![#(#children),*],
-                })
+                #tag(vec![#(#attrs),*], vec![#(#children),*])
             }
         }
         syn_rsx::Node::Attribute(attr) => {
             let name = attr.key.to_string();
 
             let mut needs_rc = false;
+            let mut is_custom = false;
 
             let constructor = match name.as_str() {
                 "onclick" => {
                     needs_rc = true;
                     quote! {OnClick}
                 }
-                "class" => quote! {Class},
-                "style" => quote! {Style},
-                _ => panic!("unknown attribute"),
+                _ => {
+                    is_custom = true;
+                    quote! {Custom}
+                }
             };
 
             if let Some(value) = &attr.value {
@@ -97,6 +95,8 @@ fn transform(node: &syn_rsx::Node) -> proc_macro2::TokenStream {
 
                 if needs_rc {
                     quote! { roko_html::Attribute::#constructor(std::sync::Arc::new(#result)) }
+                } else if is_custom {
+                    quote! { roko_html::Attribute::Custom(#name.to_string(), #result.to_string()) }
                 } else {
                     quote! { roko_html::Attribute::#constructor(#result) }
                 }

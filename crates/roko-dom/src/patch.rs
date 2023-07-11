@@ -58,8 +58,7 @@ fn apply_attributes<Msg: 'static + Send + Sync>(
             }
             AttrPatch::Remove(rem) => match rem {
                 Attribute::OnClick(_) => el.dyn_ref::<HtmlElement>().unwrap().set_onclick(None),
-                Attribute::Class(_) => el.set_class_name(""),
-                Attribute::Style(_) => el.set_attribute("style", "").unwrap(),
+                Attribute::Custom(n, _) => el.set_attribute(&n, "").unwrap(),
             },
         }
     }
