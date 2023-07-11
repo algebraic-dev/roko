@@ -1,7 +1,5 @@
-use roko_html::Html;
 use roko_macro::html;
-
-use roko_render::{app::start, render::Render};
+use roko_render::app::start;
 
 use wasm_bindgen::prelude::*;
 
@@ -16,7 +14,7 @@ async fn run() -> Result<(), JsValue> {
     std::panic::set_hook(Box::new(console_error_panic_hook::hook));
 
     start(
-        move |n| {
+        |n| {
             let a = "background:#00f".to_string();
 
             html! {

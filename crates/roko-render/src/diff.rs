@@ -16,18 +16,19 @@ impl<Msg: PartialEq + Eq> Diff for Vec<Html<Msg>> {
 
         let min_len = old.len().min(new.len());
 
-        let mut new_iter = new.into_iter();
-        let mut old_iter = old.into_iter();
+        let mut added_children = new.into_iter();
+        let mut removed_children = old.into_iter();
 
-        let added_children: Vec<_> = new_iter.by_ref().take(min_len).collect();
-        let removed_children: Vec<_> = old_iter.by_ref().take(min_len).collect();
+        let new_iter: Vec<_> = added_children.by_ref().take(min_len).collect();
+        let old_iter: Vec<_> = removed_children.by_ref().take(min_len).collect();
 
-        for (old, new) in old_iter.zip(new_iter) {
+        for (old, new) in old_iter.into_iter().zip(new_iter) {
+            web_sys::console::log_1(&format!("old: {:?} / new: {:?}", old, new).into());
             patches.push(Diff::diff(old, new));
         }
 
-        patches.extend(added_children.into_iter().map(Patch::Add));
-        patches.extend(removed_children.into_iter().map(|_| Patch::Remove));
+        patches.extend(added_children.map(Patch::Add));
+        patches.extend(removed_children.map(|_| Patch::Remove));
 
         patches
     }
@@ -41,21 +42,21 @@ impl<Msg: PartialEq + Eq> Diff for Vec<Attribute<Msg>> {
 
         let min_len = old.len().min(new.len());
 
-        let mut new_iter = new.into_iter();
-        let mut old_iter = old.into_iter();
+        let mut added_attrs = new.into_iter();
+        let mut removed_attrs = old.into_iter();
 
-        let added_attrs: Vec<_> = new_iter.by_ref().take(min_len).collect();
-        let removed_attrs: Vec<_> = old_iter.by_ref().take(min_len).collect();
+        let new_iter: Vec<_> = added_attrs.by_ref().take(min_len).collect();
+        let old_iter: Vec<_> = removed_attrs.by_ref().take(min_len).collect();
 
-        for (old, new) in old_iter.zip(new_iter) {
+        for (old, new) in old_iter.into_iter().zip(new_iter.into_iter()) {
             if old != new {
                 patches.push(AttrPatch::Remove(old));
                 patches.push(AttrPatch::Add(new));
             }
         }
 
-        patches.extend(added_attrs.into_iter().map(AttrPatch::Add));
-        patches.extend(removed_attrs.into_iter().map(AttrPatch::Remove));
+        patches.extend(added_attrs.map(AttrPatch::Add));
+        patches.extend(removed_attrs.map(AttrPatch::Remove));
 
         patches
     }
@@ -74,6 +75,11 @@ impl<Msg: PartialEq + Eq> Diff for Html<Msg> {
                 Patch::Replace(Html::Node(new_ui))
             }
             (Html::Node(old_ui), Html::Node(new_ui)) => {
+                web_sys::console::log_1(&"diffing children".into());
+
+                web_sys::console::log_1(&format!("old: {:?}", old_ui.children).into());
+                web_sys::console::log_1(&format!("new: {:?}", new_ui.children).into());
+
                 let children = Diff::diff(old_ui.children, new_ui.children);
                 let attrs = Diff::diff(old_ui.attributes, new_ui.attributes);
 

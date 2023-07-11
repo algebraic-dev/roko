@@ -25,9 +25,15 @@ fn transform(node: &syn_rsx::Node) -> proc_macro2::TokenStream {
         syn_rsx::Node::Attribute(attr) => {
             let name = attr.key.to_string();
 
+            let mut needs_rc = false;
+
             let constructor = match name.as_str() {
-                "onclick" => quote! {OnClick},
+                "onclick" => {
+                    needs_rc = true;
+                    quote! {OnClick}
+                }
                 "class" => quote! {Class},
+                "style" => quote! {Style},
                 _ => panic!("unknown attribute"),
             };
 
@@ -45,7 +51,11 @@ fn transform(node: &syn_rsx::Node) -> proc_macro2::TokenStream {
                     }
                 };
 
-                quote! { roko_html::Attribute::#constructor(#result) }
+                if needs_rc {
+                    quote! { roko_html::Attribute::#constructor(std::sync::Arc::new(#result)) }
+                } else {
+                    quote! { roko_html::Attribute::#constructor(#result) }
+                }
             } else {
                 quote! { roko_html::Attribute::#name }
             }
