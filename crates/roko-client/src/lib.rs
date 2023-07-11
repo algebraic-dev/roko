@@ -1,25 +1,34 @@
 use roko_html::Html;
 use roko_macro::html;
 
-use roko_render::render::Render;
+use roko_render::{app::start, render::Render};
 
 use wasm_bindgen::prelude::*;
 
+#[derive(Eq, PartialEq, Debug)]
+pub enum Teste {
+    A,
+    B,
+}
+
 #[wasm_bindgen(start)]
-fn run() -> Result<(), JsValue> {
-    let window = web_sys::window().expect("no global `window` exists");
-    let document = window.document().expect("should have a document on window");
-    let body = document.body().expect("document should have a body");
+async fn run() -> Result<(), JsValue> {
+    std::panic::set_hook(Box::new(console_error_panic_hook::hook));
 
-    let a = "background:#ff0".to_string();
+    start(
+        move |n| {
+            let a = "background:#00f".to_string();
 
-    let result: Html<u8> = html! {
-        <p class="ata" onclick={2}>
-            2
-        </p>
-    };
-
-    result.render(body.into(), document);
+            html! {
+                <p class="ata" style={a} onclick={Teste::A}>
+                    {*n}
+                </p>
+            }
+        },
+        |_, b| *b += 1,
+        0,
+    )
+    .await;
 
     Ok(())
 }
