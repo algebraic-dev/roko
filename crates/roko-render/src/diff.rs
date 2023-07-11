@@ -23,7 +23,6 @@ impl<Msg: PartialEq + Eq> Diff for Vec<Html<Msg>> {
         let old_iter: Vec<_> = removed_children.by_ref().take(min_len).collect();
 
         for (old, new) in old_iter.into_iter().zip(new_iter) {
-            web_sys::console::log_1(&format!("old: {:?} / new: {:?}", old, new).into());
             patches.push(Diff::diff(old, new));
         }
 
@@ -75,11 +74,6 @@ impl<Msg: PartialEq + Eq> Diff for Html<Msg> {
                 Patch::Replace(Html::Node(new_ui))
             }
             (Html::Node(old_ui), Html::Node(new_ui)) => {
-                web_sys::console::log_1(&"diffing children".into());
-
-                web_sys::console::log_1(&format!("old: {:?}", old_ui.children).into());
-                web_sys::console::log_1(&format!("new: {:?}", new_ui.children).into());
-
                 let children = Diff::diff(old_ui.children, new_ui.children);
                 let attrs = Diff::diff(old_ui.attributes, new_ui.attributes);
 

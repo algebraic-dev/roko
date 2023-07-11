@@ -1,6 +1,6 @@
 //! Module to data structures related to HTML.
 
-use std::{fmt::Debug, rc::Rc, sync::Arc};
+use std::{fmt::Debug, sync::Arc};
 
 /// Html attribute in a format that supports a tag without a value e.g `disabled` and with
 /// a value e.g `value="Hello World"`.
@@ -14,7 +14,7 @@ pub enum Attribute<Msg> {
 impl<Msg> std::fmt::Debug for Attribute<Msg> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Self::OnClick(arg0) => f.debug_tuple("OnClick").finish(),
+            Self::OnClick(_) => f.debug_tuple("OnClick").finish(),
             Self::Class(arg0) => f.debug_tuple("Class").field(arg0).finish(),
             Self::Style(arg0) => f.debug_tuple("Style").field(arg0).finish(),
         }

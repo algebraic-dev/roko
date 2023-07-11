@@ -1,13 +1,30 @@
 #![feature(type_alias_impl_trait)]
 
+use std::pin::{pin, Pin};
+
+use futures::Future;
 use roko_html::Html;
 use roko_macro::html;
-use roko_render::{start, Cmd};
+use roko_render::{start, Response};
 
 use wasm_bindgen::prelude::*;
 
+async fn read_file_future() -> Option<Message> {
+    let Ok(result) = reqwest::get("https://www.rust-lang.org").await else {
+        return Some(Message::ErrorProcessing);
+    };
+    let Ok(text) = result.text().await else {
+        return Some(Message::ErrorProcessing);
+    };
+    Some(Message::Loaded(text))
+}
+
+fn read_file() -> Box<dyn Future<Output = Option<Message>> + Unpin> {
+    Box::new(Box::pin(read_file_future()))
+}
+
 #[derive(Eq, PartialEq, Debug, Clone)]
-pub enum Teste {
+pub enum Message {
     Increment,
     Decrement,
     ErrorProcessing,
@@ -16,55 +33,38 @@ pub enum Teste {
 
 type Model = String;
 
-fn view(model: &Model) -> Html<Teste> {
+fn view(model: &Model) -> Html<Message> {
     html! {
         <div>
-            <button onclick={Teste::Increment}>
+            <button onclick={Message::Increment}>
                 "Increment"
             </button>
             <p>
                 {model.clone()}
             </p>
-            <button onclick={Teste::Decrement}>
+            <button onclick={Message::Decrement}>
                 "Decrement"
             </button>
         </div>
     }
 }
 
-async fn read_file() -> Option<Teste> {
-    let Ok(result) = reqwest::get("https://www.rust-lang.org").await else {
-        return Some(Teste::ErrorProcessing);
-    };
-
-    let Ok(text) = result.text().await else {
-        return Some(Teste::ErrorProcessing);
-    };
-
-    Some(Teste::Loaded(text))
-}
-
-async fn none() -> Option<Teste> {
-    None
-}
-
-fn update(msg: Teste, n: Model) -> (Model, Cmd<Teste>) {
+fn update(msg: Message, _n: Model) -> Response<Model, Message> {
     match msg {
-        Teste::Increment => ("oi".to_string(), Box::new(Box::pin(read_file()))),
-        Teste::Decrement => ("no".to_string(), Box::new(Box::pin(none()))),
-        Teste::ErrorProcessing => ("error".to_string(), Box::new(Box::pin(none()))),
-        Teste::Loaded(s) => (format!("loaded: {s}"), Box::new(Box::pin(none()))),
+        Message::Increment => Response::new("loading...".to_string(), read_file()),
+        Message::Decrement => Response::none("nothing!".to_string()),
+        Message::ErrorProcessing => Response::none("error".to_string()),
+        Message::Loaded(s) => Response::none(format!("loaded: {s}")),
     }
 }
 
 #[wasm_bindgen(start)]
 async fn run() -> Result<(), JsValue> {
     std::panic::set_hook(Box::new(console_error_panic_hook::hook));
-    let future = start(
-        view,
-        update,
-        ("ata".to_string(), Box::new(Box::pin(read_file()))),
-    );
+
+    let var_name = Response::none("init".to_string());
+    let future = start(view, update, var_name);
+
     future.await;
     Ok(())
 }

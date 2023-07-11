@@ -1,17 +1,21 @@
+//! This module renders the virtual dom to the real dom. The main structure of this module is the
+//! [Render] trait that is implemented for all the types that can be rendered to the real dom.
+
+use roko_html::{Attribute, Html, Node};
+
 use dom::HtmlElement;
 use futures::channel::mpsc::UnboundedSender;
 use futures::SinkExt;
-use roko_html::{Attribute, Html, Node};
 use std::sync::Arc;
 use wasm_bindgen::prelude::Closure;
 use wasm_bindgen::JsCast;
 use web_sys as dom;
 
-pub fn window() -> dom::Window {
+fn window() -> dom::Window {
     web_sys::window().expect("no global `window` exists")
 }
 
-pub fn document() -> dom::Document {
+fn document() -> dom::Document {
     window()
         .document()
         .expect("should have a document on window")
@@ -45,23 +49,15 @@ impl<Msg: 'static + Send + Sync> Render<Msg> for Attribute<Msg> {
     ) -> Option<dom::Element> {
         match self {
             Attribute::OnClick(click) => {
-                web_sys::console::log_1(&"click!!!".into());
                 let click = click.clone();
 
                 let data: Box<dyn FnMut()> = Box::new(move || {
                     let click = click.clone();
-                    web_sys::console::log_1(&"click".into());
                     let channel = channel.clone();
 
                     let click_future = async move { channel.clone().send(click).await };
 
-                    if let Err(err) = futures::executor::block_on(click_future) {
-                        web_sys::console::log_1(&format!("error: {:?}", err).into());
-                    }
-
-                    web_sys::console::log_1(&"click middle".into());
-
-                    web_sys::console::log_1(&"click end".into());
+                    futures::executor::block_on(click_future).unwrap()
                 });
 
                 let closure = Closure::wrap(data);

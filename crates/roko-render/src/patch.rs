@@ -1,22 +1,25 @@
-use std::{rc::Rc, sync::Arc};
+//! Module for patching the DOM with the [Patch] type that express the difference between the last
+//! evaluation of the virtual dom and the current one.
+
+use roko_html::{Attribute, Html};
 
 use dom::{HtmlCollection, HtmlElement};
 use futures::channel::mpsc::UnboundedSender;
-use roko_html::{Attribute, Html};
+use std::sync::Arc;
 use wasm_bindgen::JsCast;
 use web_sys as dom;
 
-use crate::{
-    app,
-    render::{self, Render},
-};
+use crate::render::Render;
 
+/// Patch for attributes
 #[derive(Debug)]
 pub enum AttrPatch<Msg> {
     Add(Attribute<Msg>),
     Remove(Attribute<Msg>),
 }
 
+/// The patch type that express the difference between the last evaluation of the virtual dom and
+/// the current one.
 #[derive(Debug)]
 pub enum Patch<Msg> {
     Add(Html<Msg>),
@@ -26,7 +29,8 @@ pub enum Patch<Msg> {
     Nothing,
 }
 
-pub fn apply_children<Msg: 'static + Send + Sync>(
+/// Applies a sequence of pathes for children.
+fn apply_children<Msg: 'static + Send + Sync>(
     parent: dom::Element,
     children: HtmlCollection,
     patches: Vec<Patch<Msg>>,
@@ -41,7 +45,8 @@ pub fn apply_children<Msg: 'static + Send + Sync>(
     }
 }
 
-pub fn apply_attributes<Msg: 'static + Send + Sync>(
+/// Applies a sequence of patches for a sequence of attributes.
+fn apply_attributes<Msg: 'static + Send + Sync>(
     el: dom::Element,
     patches: Vec<AttrPatch<Msg>>,
     channel: UnboundedSender<Arc<Msg>>,
@@ -61,6 +66,7 @@ pub fn apply_attributes<Msg: 'static + Send + Sync>(
 }
 
 impl<Msg: 'static + Send + Sync> Patch<Msg> {
+    /// This function applies a patch to the real dom.
     pub fn apply(self, el: dom::Element, channel: UnboundedSender<Arc<Msg>>) {
         match self {
             Patch::Add(add) => {
@@ -75,7 +81,7 @@ impl<Msg: 'static + Send + Sync> Patch<Msg> {
             }
             Patch::Update(children, attr) => {
                 apply_children(el.clone(), el.children(), children, channel.clone());
-                apply_attributes(el, attr, channel.clone());
+                apply_attributes(el, attr, channel);
             }
             Patch::Remove => el.remove(),
             Patch::Nothing => (),

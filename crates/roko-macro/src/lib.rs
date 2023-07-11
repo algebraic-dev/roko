@@ -3,6 +3,12 @@ use quote::{quote, ToTokens};
 use syn::Expr;
 
 #[proc_macro_attribute]
+pub fn command(_attr: TokenStream, item: TokenStream) -> TokenStream {
+    println!("{}", item);
+    item
+}
+
+#[proc_macro_attribute]
 pub fn component(_attr: TokenStream, item: TokenStream) -> TokenStream {
     item
 }
