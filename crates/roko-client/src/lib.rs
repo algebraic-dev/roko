@@ -4,13 +4,13 @@ use file::http_get;
 
 use roko_dom::elements::*;
 use roko_dom::{start, Cmd};
-use roko_html::Html;
+use roko_html::{Attribute, Html};
 use roko_macro::html;
 
 use wasm_bindgen::prelude::*;
 
 #[derive(Eq, PartialEq, Debug, Clone)]
-pub enum Message {
+pub enum Msg {
     Increment,
     Decrement,
     ErrorProcessing,
@@ -19,35 +19,48 @@ pub enum Message {
 
 type Model = String;
 
-fn view(model: &Model) -> Html<Message> {
+pub fn test(model: &Model, _attrs: Vec<Attribute<Msg>>, _children: Vec<Html<Msg>>) -> Html<Msg> {
     html! {
         <div>
-            <button onclick={Message::Increment} class="be">
+            <button>
+                {model.clone()}
+            </button>
+        </div>
+    }
+}
+
+fn view(model: &Model) -> Html<Msg> {
+    html! {
+        <div>
+            <button onclick={Msg::Increment} class="be">
                 "Increment"
             </button>
             <p>
                 {model.clone()}
             </p>
-            <button onclick={Message::Decrement}>
+            <test model={model}>
+
+            </test>
+            <button onclick={Msg::Decrement}>
                 "Decrement"
             </button>
         </div>
     }
 }
 
-fn update(msg: Message, _n: Model) -> Cmd<Model, Message> {
+fn update(msg: Msg, _n: Model) -> Cmd<Model, Msg> {
     match msg {
-        Message::Increment => Cmd::new(
+        Msg::Increment => Cmd::new(
             "loading...".to_string(),
             http_get(
                 "https://www.rust-lang.org",
-                Message::ErrorProcessing,
-                Message::Loaded,
+                Msg::ErrorProcessing,
+                Msg::Loaded,
             ),
         ),
-        Message::Decrement => Cmd::none("nothing!".to_string()),
-        Message::ErrorProcessing => Cmd::none("error".to_string()),
-        Message::Loaded(s) => Cmd::none(format!("loaded: {s}")),
+        Msg::Decrement => Cmd::none("nothing!".to_string()),
+        Msg::ErrorProcessing => Cmd::none("error".to_string()),
+        Msg::Loaded(s) => Cmd::none(format!("loaded: {s}")),
     }
 }
 
@@ -59,8 +72,8 @@ async fn run() -> Result<(), JsValue> {
         "loading...".to_string(),
         http_get(
             "https://www.rust-lang.org",
-            Message::ErrorProcessing,
-            Message::Loaded,
+            Msg::ErrorProcessing,
+            Msg::Loaded,
         ),
     );
 

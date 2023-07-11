@@ -51,15 +51,56 @@ pub fn component(_attr: TokenStream, item: TokenStream) -> TokenStream {
     item
 }
 
+fn get_model_from_attributes(attrs: &[syn_rsx::Node]) -> Option<proc_macro2::TokenStream> {
+    attrs.iter().find_map(|attr| {
+        if let syn_rsx::Node::Attribute(attr) = attr {
+            get_model_attribute(attr)
+        } else {
+            None
+        }
+    })
+}
+
+fn get_model_attribute(attrs: &syn_rsx::NodeAttribute) -> Option<proc_macro2::TokenStream> {
+    if attrs.key.to_string() == "model" {
+        let value = attrs.value.as_ref().unwrap();
+
+        let value: syn::Expr = syn::parse(value.as_ref().to_token_stream().into()).unwrap();
+
+        let result = match value {
+            Expr::Block(block) => {
+                let stmt = &block.block.stmts[0];
+                quote! { #stmt }
+            }
+            _ => {
+                quote! { #value.to_string() }
+            }
+        };
+
+        Some(result)
+    } else {
+        None
+    }
+}
+
 fn transform(node: &syn_rsx::Node) -> proc_macro2::TokenStream {
     match node {
         syn_rsx::Node::Element(el) => {
             let tag = el.name.to_token_stream();
+
             let attrs = el.attributes.iter().map(transform);
             let children = el.children.iter().map(transform);
 
-            quote! {
-                #tag(vec![#(#attrs),*], vec![#(#children),*])
+            let model = get_model_from_attributes(&el.attributes);
+
+            if let Some(model) = model {
+                quote! {
+                    #tag(#model, vec![#(#attrs),*], vec![#(#children),*])
+                }
+            } else {
+                quote! {
+                    #tag(vec![#(#attrs),*], vec![#(#children),*])
+                }
             }
         }
         syn_rsx::Node::Attribute(attr) => {
@@ -67,11 +108,16 @@ fn transform(node: &syn_rsx::Node) -> proc_macro2::TokenStream {
 
             let mut needs_rc = false;
             let mut is_custom = false;
+            let mut ignore = false;
 
             let constructor = match name.as_str() {
                 "onclick" => {
                     needs_rc = true;
                     quote! {OnClick}
+                }
+                "model" => {
+                    ignore = true;
+                    quote! {Model}
                 }
                 _ => {
                     is_custom = true;
@@ -97,6 +143,8 @@ fn transform(node: &syn_rsx::Node) -> proc_macro2::TokenStream {
                     quote! { roko_html::Attribute::#constructor(std::sync::Arc::new(#result)) }
                 } else if is_custom {
                     quote! { roko_html::Attribute::Custom(#name.to_string(), #result.to_string()) }
+                } else if ignore {
+                    quote! {}
                 } else {
                     quote! { roko_html::Attribute::#constructor(#result) }
                 }

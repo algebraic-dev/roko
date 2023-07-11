@@ -94,10 +94,9 @@ where
 
     let (sender, mut recv) = mpsc::unbounded();
 
-    let result_to = result.clone();
     let sender_to = sender.clone();
 
-    let res = result_to.render(body.clone().into(), sender_to);
+    let res = result.render(body.clone().into(), sender_to);
 
     if let Some(el) = res {
         body.append_child(&el.clone()).unwrap();
