@@ -1,27 +1,12 @@
-#![feature(type_alias_impl_trait)]
+pub mod file;
 
-use std::pin::{pin, Pin};
+use file::http_get;
 
-use futures::Future;
+use roko_dom::{start, Cmd};
 use roko_html::Html;
 use roko_macro::html;
-use roko_render::{start, Response};
 
 use wasm_bindgen::prelude::*;
-
-async fn read_file_future() -> Option<Message> {
-    let Ok(result) = reqwest::get("https://www.rust-lang.org").await else {
-        return Some(Message::ErrorProcessing);
-    };
-    let Ok(text) = result.text().await else {
-        return Some(Message::ErrorProcessing);
-    };
-    Some(Message::Loaded(text))
-}
-
-fn read_file() -> Box<dyn Future<Output = Option<Message>> + Unpin> {
-    Box::new(Box::pin(read_file_future()))
-}
 
 #[derive(Eq, PartialEq, Debug, Clone)]
 pub enum Message {
@@ -49,12 +34,19 @@ fn view(model: &Model) -> Html<Message> {
     }
 }
 
-fn update(msg: Message, _n: Model) -> Response<Model, Message> {
+fn update(msg: Message, _n: Model) -> Cmd<Model, Message> {
     match msg {
-        Message::Increment => Response::new("loading...".to_string(), read_file()),
-        Message::Decrement => Response::none("nothing!".to_string()),
-        Message::ErrorProcessing => Response::none("error".to_string()),
-        Message::Loaded(s) => Response::none(format!("loaded: {s}")),
+        Message::Increment => Cmd::new(
+            "loading...".to_string(),
+            http_get(
+                "https://www.rust-lang.org",
+                Message::ErrorProcessing,
+                Message::Loaded,
+            ),
+        ),
+        Message::Decrement => Cmd::none("nothing!".to_string()),
+        Message::ErrorProcessing => Cmd::none("error".to_string()),
+        Message::Loaded(s) => Cmd::none(format!("loaded: {s}")),
     }
 }
 
@@ -62,9 +54,14 @@ fn update(msg: Message, _n: Model) -> Response<Model, Message> {
 async fn run() -> Result<(), JsValue> {
     std::panic::set_hook(Box::new(console_error_panic_hook::hook));
 
-    let var_name = Response::none("init".to_string());
-    let future = start(view, update, var_name);
+    let init = Cmd::new(
+        "loading...".to_string(),
+        http_get(
+            "https://www.rust-lang.org",
+            Message::ErrorProcessing,
+            Message::Loaded,
+        ),
+    );
 
-    future.await;
-    Ok(())
+    start(view, update, init).await
 }

@@ -1,5 +1,5 @@
 [workspace]
 
-members = ["crates/roko-macro", "crates/roko-client", "crates/roko-render"]
+members = ["crates/roko-macro", "crates/roko-client", "crates/roko-dom"]
 
 resolver = "1"

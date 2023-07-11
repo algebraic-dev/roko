@@ -657,7 +657,7 @@ dependencies = [
  "reqwest",
  "roko-html",
  "roko-macro",
- "roko-render",
+ "roko-dom",
  "wasm-bindgen",
  "wasm-bindgen-futures",
  "web-sys",
@@ -678,7 +678,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "roko-render"
+name = "roko-dom"
 version = "0.1.0"
 dependencies = [
  "futures",

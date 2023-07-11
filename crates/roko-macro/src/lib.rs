@@ -1,11 +1,49 @@
 use proc_macro::TokenStream;
 use quote::{quote, ToTokens};
-use syn::Expr;
+use syn::{Expr, ItemFn};
 
 #[proc_macro_attribute]
-pub fn command(_attr: TokenStream, item: TokenStream) -> TokenStream {
-    println!("{}", item);
-    item
+#[allow(clippy::redundant_clone)]
+pub fn cmd(_attr: TokenStream, item: TokenStream) -> TokenStream {
+    let mut parsed: ItemFn = syn::parse(item).unwrap();
+
+    if parsed.sig.asyncness.is_none() {
+        panic!("cmd must be async");
+    }
+
+    let name = parsed.sig.ident;
+
+    parsed.sig.ident = syn::Ident::new(&format!("{}_future", name), name.span());
+
+    let gen = parsed.sig.generics.clone();
+    let args = parsed.sig.inputs.clone();
+
+    let new_name = parsed.sig.ident.clone();
+
+    let args_call = args.clone();
+
+    let args_call = args_call
+        .iter()
+        .map(|arg| match arg {
+            syn::FnArg::Typed(pat) => {
+                let pat = pat.pat.clone();
+                match &*pat {
+                    syn::Pat::Ident(name) => name.ident.clone(),
+                    _ => todo!("pattern matching"),
+                }
+            }
+            _ => todo!(),
+        })
+        .collect::<Vec<_>>();
+
+    quote! {
+        pub fn #name #gen (#args) -> Box<dyn std::future::Future<Output = Option<Msg>> + std::marker::Unpin> {
+            #parsed
+            Box::new(Box::pin(#new_name(
+                #(#args_call),*
+            )))
+        }
+    }.into()
 }
 
 #[proc_macro_attribute]
