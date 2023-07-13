@@ -8,6 +8,7 @@ pub mod render;
 use std::pin::Pin;
 use std::sync::Arc;
 
+use render::Context;
 use wasm_bindgen::JsValue;
 pub use web_sys as dom;
 
@@ -78,6 +79,8 @@ pub async fn start<
     mut view: V,
     mut update: U,
     mut init: Cmd<Model, Msg>,
+    on_mount: Option<Box<dyn FnMut(dom::Element, String)>>,
+    on_unmount: Option<Box<dyn FnMut(dom::Element, String)>>,
 ) -> Result<(), JsValue>
 where
     V: FnMut(&Model) -> Html<Msg>,
@@ -95,7 +98,14 @@ where
 
     let sender_to = sender.clone();
 
-    let res = result.render(body.clone().into(), sender_to);
+    let res = result.render(
+        body.clone().into(),
+        &mut Context {
+            channel: sender_to.clone(),
+            on_mount: &on_mount,
+            on_unmount: &on_unmount,
+        },
+    );
 
     if let Some(el) = res {
         body.append_child(&el.clone()).unwrap();
@@ -115,7 +125,14 @@ where
 
             result = result_new;
 
-            diff.apply(el.clone(), sender.clone());
+            diff.apply(
+                el.clone(),
+                &mut Context {
+                    channel: sender_to.clone(),
+                    on_mount: &on_mount,
+                    on_unmount: &on_unmount,
+                },
+            );
 
             if let Some(msg) = init.future.await {
                 sender.unbounded_send(Arc::new(msg)).unwrap();

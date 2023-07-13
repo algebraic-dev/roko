@@ -21,38 +21,39 @@ fn document() -> dom::Document {
         .expect("should have a document on window")
 }
 
-/// Trait for rendering a virtual dom to the real dom.
-pub trait Render<T> {
-    fn render(
-        &self,
-        container: dom::Element,
-        channel: UnboundedSender<Arc<T>>,
-    ) -> Option<dom::Element>;
+pub struct Context<'a, Msg> {
+    pub channel: UnboundedSender<Arc<Msg>>,
+    pub on_mount: &'a Option<Box<dyn FnMut(dom::Element, String)>>,
+    pub on_unmount: &'a Option<Box<dyn FnMut(dom::Element, String)>>,
 }
 
-impl<Msg: 'static> Render<Msg> for String {
-    fn render(
-        &self,
-        container: dom::Element,
-        _: UnboundedSender<Arc<Msg>>,
-    ) -> Option<dom::Element> {
+/// Trait for rendering a virtual dom to the real dom.
+pub trait Render<'a, T> {
+    fn render(&self, container: dom::Element, ctx: &mut Context<'a, T>) -> Option<dom::Element>;
+}
+
+impl<'a, Msg: 'static> Render<'a, Msg> for String {
+    fn render(&self, container: dom::Element, _: &mut Context<'a, Msg>) -> Option<dom::Element> {
         container.set_text_content(Some(self));
         None
     }
 }
 
-impl<Msg: 'static + Send + Sync> Render<Msg> for Attribute<Msg> {
+impl<'a, Msg: 'static + Send + Sync> Render<'a, Msg> for Attribute<Msg> {
     fn render(
         &self,
         container: dom::Element,
-        channel: UnboundedSender<Arc<Msg>>,
+        context: &mut Context<'a, Msg>,
     ) -> Option<dom::Element> {
         match self {
             Attribute::OnClick(click) => {
                 let click = click.clone();
 
+                let channel = context.channel.clone();
+
                 let data: Box<dyn FnMut()> = Box::new(move || {
                     let click = click.clone();
+
                     let channel = channel.clone();
 
                     let click_future = async move { channel.clone().send(click).await };
@@ -72,7 +73,7 @@ impl<Msg: 'static + Send + Sync> Render<Msg> for Attribute<Msg> {
             Attribute::Custom(name, value) => container.set_attribute(name, value).unwrap(),
             Attribute::OnMount(ev) => {
                 let ev = ev.clone();
-                let channel = channel;
+                let channel = context.channel.clone();
 
                 let ev_future = async move { channel.clone().send(ev).await };
 
@@ -84,16 +85,16 @@ impl<Msg: 'static + Send + Sync> Render<Msg> for Attribute<Msg> {
     }
 }
 
-impl<Msg: 'static + Send + Sync> Render<Msg> for Node<Msg> {
-    fn render(&self, _: dom::Element, channel: UnboundedSender<Arc<Msg>>) -> Option<dom::Element> {
+impl<'a, Msg: 'static + Send + Sync> Render<'a, Msg> for Node<Msg> {
+    fn render(&self, _: dom::Element, context: &mut Context<'a, Msg>) -> Option<dom::Element> {
         let element = document().create_element(self.tag).unwrap();
 
         for attribute in &self.attributes {
-            attribute.render(element.clone(), channel.clone());
+            attribute.render(element.clone(), context);
         }
 
         for child in &self.children {
-            if let Some(result) = child.render(element.clone(), channel.clone()) {
+            if let Some(result) = child.render(element.clone(), context) {
                 element.append_child(&result).unwrap();
             }
         }
@@ -102,15 +103,15 @@ impl<Msg: 'static + Send + Sync> Render<Msg> for Node<Msg> {
     }
 }
 
-impl<Msg: 'static + Send + Sync> Render<Msg> for Html<Msg> {
+impl<'a, Msg: 'static + Send + Sync> Render<'a, Msg> for Html<Msg> {
     fn render(
         &self,
         container: dom::Element,
-        channel: UnboundedSender<Arc<Msg>>,
+        context: &mut Context<'a, Msg>,
     ) -> Option<dom::Element> {
         match self {
-            Html::Node(node) => node.render(container, channel),
-            Html::Text(text) => text.render(container, channel),
+            Html::Node(node) => node.render(container, context),
+            Html::Text(text) => text.render(container, context),
         }
     }
 }
