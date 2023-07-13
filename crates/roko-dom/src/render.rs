@@ -23,8 +23,8 @@ fn document() -> dom::Document {
 
 pub struct Context<'a, Msg> {
     pub channel: UnboundedSender<Arc<Msg>>,
-    pub on_mount: &'a Option<Box<dyn FnMut(dom::Element, String)>>,
-    pub on_unmount: &'a Option<Box<dyn FnMut(dom::Element, String)>>,
+    pub on_mount: &'a Option<Box<dyn Fn(dom::Element, String)>>,
+    pub on_unmount: &'a Option<Box<dyn Fn(dom::Element, String)>>,
 }
 
 /// Trait for rendering a virtual dom to the real dom.
@@ -88,6 +88,10 @@ impl<'a, Msg: 'static + Send + Sync> Render<'a, Msg> for Attribute<Msg> {
 impl<'a, Msg: 'static + Send + Sync> Render<'a, Msg> for Node<Msg> {
     fn render(&self, _: dom::Element, context: &mut Context<'a, Msg>) -> Option<dom::Element> {
         let element = document().create_element(self.tag).unwrap();
+
+        if let Some((on_mount, id)) = context.on_mount.as_ref().zip(self.id.as_ref()) {
+            on_mount(element.clone(), id.clone());
+        }
 
         for attribute in &self.attributes {
             attribute.render(element.clone(), context);

@@ -2,14 +2,26 @@
 /// `roko_macro` crate to create the HTML elements that are rendered to the DOM.
 use roko_html::{Attribute, Html};
 
-pub fn p<Msg>(attrs: Vec<Attribute<Msg>>, children: Vec<Html<Msg>>) -> Html<Msg> {
-    Html::node("p", attrs, children)
+pub fn p<Msg>(
+    id: Option<String>,
+    attrs: Vec<Attribute<Msg>>,
+    children: Vec<Html<Msg>>,
+) -> Html<Msg> {
+    Html::node("p", id, attrs, children)
 }
 
-pub fn div<Msg>(attrs: Vec<Attribute<Msg>>, children: Vec<Html<Msg>>) -> Html<Msg> {
-    Html::node("div", attrs, children)
+pub fn div<Msg>(
+    id: Option<String>,
+    attrs: Vec<Attribute<Msg>>,
+    children: Vec<Html<Msg>>,
+) -> Html<Msg> {
+    Html::node("div", id, attrs, children)
 }
 
-pub fn button<Msg>(attrs: Vec<Attribute<Msg>>, children: Vec<Html<Msg>>) -> Html<Msg> {
-    Html::node("button", attrs, children)
+pub fn button<Msg>(
+    id: Option<String>,
+    attrs: Vec<Attribute<Msg>>,
+    children: Vec<Html<Msg>>,
+) -> Html<Msg> {
+    Html::node("button", id, attrs, children)
 }

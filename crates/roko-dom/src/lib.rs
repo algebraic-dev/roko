@@ -79,8 +79,8 @@ pub async fn start<
     mut view: V,
     mut update: U,
     mut init: Cmd<Model, Msg>,
-    on_mount: Option<Box<dyn FnMut(dom::Element, String)>>,
-    on_unmount: Option<Box<dyn FnMut(dom::Element, String)>>,
+    on_mount: Option<Box<dyn Fn(dom::Element, String)>>,
+    on_unmount: Option<Box<dyn Fn(dom::Element, String)>>,
 ) -> Result<(), JsValue>
 where
     V: FnMut(&Model) -> Html<Msg>,

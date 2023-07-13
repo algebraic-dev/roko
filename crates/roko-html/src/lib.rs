@@ -26,6 +26,7 @@ impl<Msg> Clone for Attribute<Msg> {
 /// Html node that contains a tag, attributes and children.
 pub struct Node<Msg> {
     pub tag: &'static str,
+    pub id: Option<String>,
     pub attributes: Vec<Attribute<Msg>>,
     pub children: Vec<Html<Msg>>,
 }
@@ -34,6 +35,7 @@ impl<Msg> Clone for Node<Msg> {
     fn clone(&self) -> Self {
         Self {
             tag: self.tag,
+            id: self.id.clone(),
             attributes: self.attributes.clone(),
             children: self.children.clone(),
         }
@@ -50,11 +52,13 @@ pub enum Html<Msg> {
 impl<Msg> Html<Msg> {
     pub fn node(
         tag: &'static str,
+        id: Option<String>,
         attributes: Vec<Attribute<Msg>>,
         children: Vec<Html<Msg>>,
     ) -> Self {
         Self::Node(Node {
             tag,
+            id,
             attributes,
             children,
         })
@@ -71,18 +75,6 @@ impl<Msg> Clone for Html<Msg> {
 }
 
 /// Creates a new node.
-
-pub fn node<Msg>(
-    tag: &'static str,
-    attributes: Vec<Attribute<Msg>>,
-    children: Vec<Html<Msg>>,
-) -> Html<Msg> {
-    Html::Node(Node {
-        tag,
-        attributes,
-        children,
-    })
-}
 
 pub fn text<Msg, T: Into<Html<Msg>>>(text: T) -> Html<Msg> {
     text.into()

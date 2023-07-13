@@ -31,7 +31,12 @@ impl<Msg: PartialEq + Eq> Diff for Vec<Html<Msg>> {
         }
 
         patches.extend(added_children.map(Patch::Add));
-        patches.extend(removed_children.map(|_| Patch::Remove));
+        patches.extend(removed_children.map(|s| {
+            Patch::Remove(match s {
+                Html::Node(s) => s.id,
+                Html::Text(_) => None,
+            })
+        }));
 
         patches
     }

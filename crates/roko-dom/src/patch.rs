@@ -23,7 +23,7 @@ pub enum Patch<Msg> {
     Add(Html<Msg>),
     Replace(Html<Msg>),
     Update(Vec<Patch<Msg>>, Vec<AttrPatch<Msg>>),
-    Remove,
+    Remove(Option<String>),
     Nothing,
 }
 
@@ -89,7 +89,12 @@ impl<'a, Msg: 'static + Send + Sync> Patch<Msg> {
                 apply_children(el.clone(), el.children(), children, context);
                 apply_attributes(el, attr, context);
             }
-            Patch::Remove => el.remove(),
+            Patch::Remove(key) => {
+                if let Some((on_mount, key)) = context.on_mount.as_ref().zip(key.as_ref()) {
+                    on_mount(el.clone(), key.clone());
+                }
+                el.remove()
+            }
             Patch::Nothing => (),
         }
     }
