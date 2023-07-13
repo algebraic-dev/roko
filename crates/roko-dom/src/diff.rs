@@ -1,7 +1,11 @@
+//! Diffing algorithm for HTML nodes. It simply compares two nodes and returns a [Patch] that can
+//! be applied to the DOM to update it.
+
 use roko_html::{Attribute, Html};
 
 use crate::patch::{AttrPatch, Patch};
 
+/// Diff trait that is implemented for all types that can be diffed.
 pub trait Diff {
     type Output;
 

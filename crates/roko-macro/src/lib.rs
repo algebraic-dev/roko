@@ -115,6 +115,14 @@ fn transform(node: &syn_rsx::Node) -> proc_macro2::TokenStream {
                     needs_rc = true;
                     quote! {OnClick}
                 }
+                "onmount" => {
+                    needs_rc = true;
+                    quote! {OnMount}
+                }
+                "onunmount" => {
+                    needs_rc = true;
+                    quote! {OnUnmount}
+                }
                 "model" => {
                     ignore = true;
                     quote! {Model}

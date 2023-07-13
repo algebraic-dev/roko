@@ -649,21 +649,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "roko-client"
-version = "0.1.0"
-dependencies = [
- "console_error_panic_hook",
- "futures",
- "reqwest",
- "roko-dom",
- "roko-html",
- "roko-macro",
- "wasm-bindgen",
- "wasm-bindgen-futures",
- "web-sys",
-]
-
-[[package]]
 name = "roko-dom"
 version = "0.1.0"
 dependencies = [
@@ -679,6 +664,15 @@ name = "roko-html"
 version = "0.1.0"
 
 [[package]]
+name = "roko-http"
+version = "0.1.0"
+dependencies = [
+ "reqwest",
+ "roko-macro",
+ "wasm-bindgen-futures",
+]
+
+[[package]]
 name = "roko-macro"
 version = "0.1.0"
 dependencies = [
@@ -686,6 +680,21 @@ dependencies = [
  "quote",
  "syn 2.0.25",
  "syn-rsx",
+]
+
+[[package]]
+name = "roko-sofia-client"
+version = "0.1.0"
+dependencies = [
+ "console_error_panic_hook",
+ "futures",
+ "roko-dom",
+ "roko-html",
+ "roko-http",
+ "roko-macro",
+ "wasm-bindgen",
+ "wasm-bindgen-futures",
+ "web-sys",
 ]
 
 [[package]]

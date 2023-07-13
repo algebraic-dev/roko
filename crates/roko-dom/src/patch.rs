@@ -5,6 +5,7 @@ use roko_html::{Attribute, Html};
 
 use dom::{HtmlCollection, HtmlElement};
 use futures::channel::mpsc::UnboundedSender;
+use futures::SinkExt;
 use std::sync::Arc;
 use wasm_bindgen::JsCast;
 use web_sys as dom;
@@ -12,7 +13,6 @@ use web_sys as dom;
 use crate::render::Render;
 
 /// Patch for attributes
-#[derive(Debug)]
 pub enum AttrPatch<Msg> {
     Add(Attribute<Msg>),
     Remove(Attribute<Msg>),
@@ -20,7 +20,6 @@ pub enum AttrPatch<Msg> {
 
 /// The patch type that express the difference between the last evaluation of the virtual dom and
 /// the current one.
-#[derive(Debug)]
 pub enum Patch<Msg> {
     Add(Html<Msg>),
     Replace(Html<Msg>),
@@ -59,6 +58,15 @@ fn apply_attributes<Msg: 'static + Send + Sync>(
             AttrPatch::Remove(rem) => match rem {
                 Attribute::OnClick(_) => el.dyn_ref::<HtmlElement>().unwrap().set_onclick(None),
                 Attribute::Custom(n, _) => el.set_attribute(&n, "").unwrap(),
+                Attribute::OnMount(_) => (),
+                Attribute::OnUnmount(ev) => {
+                    let ev = ev.clone();
+                    let channel = channel.clone();
+
+                    let ev_future = async move { channel.clone().send(ev).await };
+
+                    futures::executor::block_on(ev_future).unwrap();
+                }
             },
         }
     }

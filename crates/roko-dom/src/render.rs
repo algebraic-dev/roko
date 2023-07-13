@@ -70,6 +70,15 @@ impl<Msg: 'static + Send + Sync> Render<Msg> for Attribute<Msg> {
                 closure.forget()
             }
             Attribute::Custom(name, value) => container.set_attribute(name, value).unwrap(),
+            Attribute::OnMount(ev) => {
+                let ev = ev.clone();
+                let channel = channel;
+
+                let ev_future = async move { channel.clone().send(ev).await };
+
+                futures::executor::block_on(ev_future).unwrap()
+            }
+            Attribute::OnUnmount(_) => (),
         };
         None
     }
