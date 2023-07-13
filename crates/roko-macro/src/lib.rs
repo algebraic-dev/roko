@@ -1,14 +1,8 @@
 #![feature(proc_macro_span)]
 
-use proc_macro::{Span, TokenStream};
+use proc_macro::TokenStream;
 use quote::{quote, ToTokens};
-use rsass::compile_scss;
-use syn::{parse_macro_input, Expr, ItemFn, LitStr};
-
-use std::fs::File;
-use std::hash::{Hash, Hasher};
-use std::io::Write;
-use std::path::PathBuf;
+use syn::{Expr, ItemFn};
 
 #[proc_macro_attribute]
 #[allow(clippy::redundant_clone)]
@@ -194,60 +188,4 @@ pub fn html(item: TokenStream) -> TokenStream {
     let html = syn_rsx::parse(item).unwrap();
     let res = transform(&html[0]);
     quote! {#res}.into()
-}
-
-#[proc_macro]
-pub fn style(input: TokenStream) -> TokenStream {
-    let lit_str = parse_macro_input!(input as LitStr);
-
-    let compile = compile_scss(lit_str.value().as_bytes(), Default::default());
-
-    match compile {
-        Ok(ok) => {
-            let span = Span::call_site();
-            let source = span.source_file();
-
-            let mut hasher = fxhash::FxHasher64::default();
-
-            source
-                .path()
-                .canonicalize()
-                .unwrap()
-                .to_str()
-                .unwrap()
-                .hash(&mut hasher);
-
-            let hash = hasher.finish();
-
-            let mut path = PathBuf::from(env!("PROC_ARTIFACT_DIR"));
-            path.push("css");
-
-            if !path.exists() {
-                std::fs::create_dir(&path).unwrap();
-            }
-
-            path.push(format!("{:x}.css", hash));
-
-            let mut file = File::create(path).unwrap();
-            file.write_all(&ok).unwrap();
-
-            quote! {}.into()
-        }
-        Err(err) => {
-            let err = err.to_string();
-            quote! { compile_error!(#err); }.into()
-        }
-    }
-}
-
-#[proc_macro]
-pub fn style_folder(_: TokenStream) -> TokenStream {
-    let mut path = PathBuf::from(env!("PROC_ARTIFACT_DIR"));
-    path.push("css");
-    let path = path.to_str();
-
-    quote! {
-        #path
-    }
-    .into()
 }
