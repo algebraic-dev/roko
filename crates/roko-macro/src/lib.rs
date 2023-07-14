@@ -94,7 +94,13 @@ fn transform(node: &syn_rsx::Node) -> proc_macro2::TokenStream {
             let attrs = el.attributes.iter().map(transform);
             let children = el.children.iter().map(transform);
 
+            let mut children = quote! { vec![#(#children),*] };
+
             let model = get_attribute_from_attrs(&el.attributes, "model");
+
+            if let Some(child) = get_attribute_from_attrs(&el.attributes, "children") {
+                children = child;
+            }
 
             let key = if let Some(attr) = get_attribute_from_attrs(&el.attributes, "key") {
                 quote! { Some(#attr) }
@@ -104,11 +110,11 @@ fn transform(node: &syn_rsx::Node) -> proc_macro2::TokenStream {
 
             if let Some(model) = model {
                 quote! {
-                    #tag(#model, #key, vec![#(#attrs),*], vec![#(#children),*])
+                    #tag(#model, #key, vec![#(#attrs),*], #children)
                 }
             } else {
                 quote! {
-                    #tag(#key, vec![#(#attrs),*], vec![#(#children),*])
+                    #tag(#key, vec![#(#attrs),*], #children)
                 }
             }
         }
@@ -132,9 +138,9 @@ fn transform(node: &syn_rsx::Node) -> proc_macro2::TokenStream {
                     needs_rc = true;
                     quote! {OnUnmount}
                 }
-                "model" => {
+                "model" | "children" => {
                     ignore = true;
-                    quote! {Model}
+                    quote! {None}
                 }
                 _ => {
                     is_custom = true;

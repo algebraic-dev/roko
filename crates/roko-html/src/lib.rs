@@ -1,6 +1,10 @@
 //! Module to data structures related to HTML.
 
-use std::sync::Arc;
+use std::{collections::HashMap, fmt::Debug, sync::Arc};
+
+pub type Attrs<Message> = Vec<Attribute<Message>>;
+
+pub type Children<Message> = Vec<Html<Message>>;
 
 /// Html attribute in a format that supports a tag without a value e.g `disabled` and with
 /// a value e.g `value="Hello World"`.
@@ -10,6 +14,17 @@ pub enum Attribute<Msg> {
     OnMount(Arc<Msg>),
     OnUnmount(Arc<Msg>),
     Custom(String, String),
+}
+
+impl<Msg> Debug for Attribute<Msg> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::OnClick(_) => f.debug_tuple("OnClick").finish(),
+            Self::OnMount(_) => f.debug_tuple("OnMount").finish(),
+            Self::OnUnmount(_) => f.debug_tuple("OnUnmount").finish(),
+            Self::Custom(arg0, arg1) => f.debug_tuple("Custom").field(arg0).field(arg1).finish(),
+        }
+    }
 }
 
 impl<Msg> Clone for Attribute<Msg> {
@@ -23,12 +38,35 @@ impl<Msg> Clone for Attribute<Msg> {
     }
 }
 
+pub fn to_map<Msg>(attrs: Attrs<Msg>) -> HashMap<String, String> {
+    let mut map = HashMap::new();
+
+    for attr in attrs {
+        if let Attribute::Custom(key, value) = attr {
+            map.insert(key, value);
+        }
+    }
+
+    map
+}
+
 /// Html node that contains a tag, attributes and children.
 pub struct Node<Msg> {
     pub tag: &'static str,
     pub id: Option<String>,
     pub attributes: Vec<Attribute<Msg>>,
     pub children: Vec<Html<Msg>>,
+}
+
+impl<Msg> Debug for Node<Msg> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("Node")
+            .field("tag", &self.tag)
+            .field("id", &self.id)
+            .field("attributes", &self.attributes)
+            .field("children", &self.children)
+            .finish()
+    }
 }
 
 impl<Msg> Clone for Node<Msg> {
@@ -47,6 +85,15 @@ impl<Msg> Clone for Node<Msg> {
 pub enum Html<Msg> {
     Node(Node<Msg>),
     Text(String),
+}
+
+impl<Msg> Debug for Html<Msg> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::Node(arg0) => f.debug_tuple("Node").field(arg0).finish(),
+            Self::Text(arg0) => f.debug_tuple("Text").field(arg0).finish(),
+        }
+    }
 }
 
 impl<Msg> Html<Msg> {

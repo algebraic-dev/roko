@@ -86,7 +86,9 @@ impl<Msg: PartialEq + Eq> Diff for Html<Msg> {
                 let children = Diff::diff(old_ui.children, new_ui.children);
                 let attrs = Diff::diff(old_ui.attributes, new_ui.attributes);
 
-                if children.is_empty() && attrs.is_empty() {
+                if (children.is_empty() || children.iter().all(|x| x.is_nothing()))
+                    && attrs.is_empty()
+                {
                     Patch::Nothing
                 } else {
                     Patch::Update(children, attrs)

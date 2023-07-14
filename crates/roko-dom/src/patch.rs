@@ -5,6 +5,7 @@ use roko_html::{Attribute, Html};
 
 use dom::{HtmlCollection, HtmlElement};
 use futures::SinkExt;
+use std::fmt::Debug;
 
 use wasm_bindgen::JsCast;
 use web_sys as dom;
@@ -17,6 +18,15 @@ pub enum AttrPatch<Msg> {
     Remove(Attribute<Msg>),
 }
 
+impl<Msg> Debug for AttrPatch<Msg> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::Add(arg0) => f.debug_tuple("Add").field(arg0).finish(),
+            Self::Remove(arg0) => f.debug_tuple("Remove").field(arg0).finish(),
+        }
+    }
+}
+
 /// The patch type that express the difference between the last evaluation of the virtual dom and
 /// the current one.
 pub enum Patch<Msg> {
@@ -25,6 +35,24 @@ pub enum Patch<Msg> {
     Update(Vec<Patch<Msg>>, Vec<AttrPatch<Msg>>),
     Remove(Option<String>),
     Nothing,
+}
+
+impl<Msg> Patch<Msg> {
+    pub fn is_nothing(&self) -> bool {
+        matches!(self, Self::Nothing)
+    }
+}
+
+impl<Msg> Debug for Patch<Msg> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::Add(arg0) => f.debug_tuple("Add").field(arg0).finish(),
+            Self::Replace(arg0) => f.debug_tuple("Replace").field(arg0).finish(),
+            Self::Update(arg0, arg1) => f.debug_tuple("Update").field(arg0).field(arg1).finish(),
+            Self::Remove(arg0) => f.debug_tuple("Remove").field(arg0).finish(),
+            Self::Nothing => write!(f, "Nothing"),
+        }
+    }
 }
 
 /// Applies a sequence of pathes for children.
@@ -76,13 +104,13 @@ impl<'a, Msg: 'static + Send + Sync> Patch<Msg> {
     pub fn apply(self, el: dom::Element, context: &mut Context<'a, Msg>) {
         match self {
             Patch::Add(add) => {
-                if let Some(el) = add.render(el, context) {
-                    el.append_child(&el).unwrap();
+                if let Some(new_el) = add.render(el.clone(), context) {
+                    el.append_child(&new_el).unwrap();
                 }
             }
             Patch::Replace(replace) => {
-                if let Some(el) = replace.render(el, context) {
-                    el.replace_with_with_node_1(&el).unwrap();
+                if let Some(new_el) = replace.render(el.clone(), context) {
+                    el.replace_with_with_node_1(&new_el).unwrap();
                 }
             }
             Patch::Update(children, attr) => {
