@@ -2,6 +2,7 @@
 
 pub mod diff;
 pub mod elements;
+pub mod events;
 pub mod patch;
 pub mod render;
 
@@ -10,14 +11,17 @@ use std::sync::Arc;
 
 use render::Context;
 use wasm_bindgen::JsValue;
+
 pub use web_sys as dom;
 
 use crate::diff::Diff;
 use crate::render::Render;
 
-use futures::channel::mpsc;
+use futures::channel::mpsc::{self, UnboundedSender};
 use futures::{Future, StreamExt};
 use roko_html::Html;
+
+pub type Channel<Msg> = UnboundedSender<Arc<Msg>>;
 
 pub struct Cmd<Model, Msg> {
     future: Pin<Box<dyn Future<Output = Option<Msg>>>>,
@@ -42,6 +46,13 @@ impl<Model, Msg: 'static> Cmd<Model, Msg> {
     pub fn none(model: Model) -> Self {
         Self {
             future: Box::pin(futures::future::ready(None)),
+            model,
+        }
+    }
+
+    pub fn message(model: Model, msg: Msg) -> Self {
+        Self {
+            future: Box::pin(futures::future::ready(Some(msg))),
             model,
         }
     }
@@ -79,6 +90,7 @@ pub async fn start<
     mut view: V,
     mut update: U,
     mut init: Cmd<Model, Msg>,
+    subscriptions: fn(UnboundedSender<Arc<Msg>>) -> (),
     on_mount: Option<Box<dyn Fn(dom::Element, String)>>,
     on_unmount: Option<Box<dyn Fn(dom::Element, String)>>,
 ) -> Result<(), JsValue>
@@ -97,6 +109,8 @@ where
     let (sender, mut recv) = mpsc::unbounded();
 
     let sender_to = sender.clone();
+
+    subscriptions(sender.clone());
 
     let res = result.render(
         body.clone().into(),

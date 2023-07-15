@@ -20,6 +20,36 @@ pub enum Page {
     Resume,
 }
 
+impl Page {
+    pub fn from_hash(hash: &str) -> Self {
+        match hash {
+            "" | "#" => Self::Home,
+            "#blog" => Self::Blog,
+            "#projects" => Self::Projects,
+            "#resume" => Self::Resume,
+            _ => Self::Home,
+        }
+    }
+
+    pub fn to_hash(self) -> String {
+        match self {
+            Self::Home => String::from("#"),
+            Self::Blog => String::from("#blog"),
+            Self::Projects => String::from("#projects"),
+            Self::Resume => String::from("#resume"),
+        }
+    }
+
+    pub fn to_title(self) -> String {
+        match self {
+            Self::Home => String::from("Home | Sofia"),
+            Self::Blog => String::from("Blog | Sofia"),
+            Self::Projects => String::from("Projects | Sofia"),
+            Self::Resume => String::from("Resume | Sofia"),
+        }
+    }
+}
+
 impl Display for Page {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
