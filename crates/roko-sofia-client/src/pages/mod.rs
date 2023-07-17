@@ -33,7 +33,7 @@ impl Page {
 
     pub fn to_hash(self) -> String {
         match self {
-            Self::Home => String::from("#"),
+            Self::Home => String::from(""),
             Self::Blog => String::from("#blog"),
             Self::Projects => String::from("#projects"),
             Self::Resume => String::from("#resume"),
@@ -61,7 +61,7 @@ impl Display for Page {
     }
 }
 
-pub const PAGES: &[Page] = &[Page::Home, Page::Blog, Page::Projects, Page::Resume];
+pub const PAGES: &[Page] = &[Page::Home, Page::Projects, Page::Resume];
 
 pub fn page(
     model: &Model,

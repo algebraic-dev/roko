@@ -115,3 +115,36 @@ body {
     top: 50vh;
     transform: translate(-50%, -50%);
 }
+
+.project-posts {
+    margin: auto;
+    display: flex;
+    align-content: center;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+}
+
+.project-card {
+    color: #fff;
+    padding: 20px;
+    margin: 20px;
+    background: rgb(45, 45, 49);
+    border-radius: 10px;
+    height: fit-content;
+    width: 100%;
+    display: flex;
+    gap: 10px;
+    flex-direction: column;
+    border: 2px solid #3d3d42;
+}
+
+.project-card p {
+    color: #bbb8b8;
+}
+
+.project-card .button {
+    text-decoration: none;
+    color: #918f90;
+    font-size: 13px;
+}

@@ -7,9 +7,7 @@ use crate::{Message, Model};
 pub fn page(_model: &Model, _attrs: Attrs<Message>, _children: Children<Message>) -> Html<Message> {
     html! {
         <div>
-            <div>
-                "atba"
-            </div>
+            "blog"
         </div>
     }
 }
